@@ -62,8 +62,6 @@ The board gets a clear choice: a $150K investment that pays for itself and fixes
 - No insurance yet. Cyber insurance, which would reduce the highest losses, is planned for version 2.
 - Open FAIR is a trademark of The Open Group. This app isn't affiliated with or endorsed by them.
 
-
-
 Nobody knows these numbers exactly, so every input is a range: a low guess, a most likely guess, and a high guess.
 
 ## How the App Thinks
