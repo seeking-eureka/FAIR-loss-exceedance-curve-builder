@@ -4,7 +4,7 @@ An interactive app for learning cyber risk quantification with the Open FAIR mod
 
 The app is a teaching tool, not a risk-reporting or insurance-pricing system. It favors clear, visible math over production features.
 
-**Live app:** `https://patrick-lefler.com/fair_loss_exceedance_curve/`
+**Live app:** `https://seeking-eureka.github.io/FAIR-loss-exceedance-curve-builder/`
 
 ## What the App Shows
 
