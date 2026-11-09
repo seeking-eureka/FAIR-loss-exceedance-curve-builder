@@ -23,12 +23,12 @@ The app acts like a flight simulator, but for years of possible losses.
 
 ## Reading the Screen
 
-- Scenario Register. The list of risks and their ranges. Click any scenario to open and edit it.
-- Risk Appetite. These are the board's limits. By default: no more than a 60% chance of losing over $1M in a year, 10% for over $5M, and 1% for over $20M.
-- Loss Exceedance Curve. This is the main chart. Choose any dollar amount on the bottom axis. The height of the green curve shows the chance of losing more than that amount in a year. The gold dots show the board's limits. If the curve goes above a gold dot, that limit is broken.
-- Annualized Loss by Scenario. Which risks cost the most on average.
-- Control Under Evaluation. This is a proposed security investment, its yearly cost, and what it changes. The blue dashed curve shows the risk if the control is used.
-- The slider and Play. Watch the results become more stable as the number of runs grows from 100 to 100,000 years.
+- **Scenario Register:** The list of risks and their ranges. Click any scenario to open and edit it.
+- **Risk Appetite:** These are the board's limits. By default: no more than a 60% chance of losing over $1M in a year, 10% for over $5M, and 1% for over $20M.
+- **Loss Exceedance Curve:** This is the main chart. Choose any dollar amount on the bottom axis. The height of the green curve shows the chance of losing more than that amount in a year. The gold dots show the board's limits. If the curve goes above a gold dot, that limit is broken.
+- **Annualized Loss by Scenario:** Which risks cost the most on average.
+- **Control Under Evaluation.** This is a proposed security investment, its yearly cost, and what it changes. The blue dashed curve shows the risk if the control is used.
+- **The slider and Play.** Watch the results become more stable as the number of runs grows from 100 to 100,000 years.
 
 ## A Story in Three Moments
 
@@ -68,19 +68,19 @@ Nobody knows these numbers exactly, so every input is a range: a low guess, a mo
 
 The app works like a flight simulator for loss years.
 
-1. **List the risks.** Six sample scenarios are included, such as ransomware, a customer data breach, and an outage at a key cloud vendor.
-2. **Roll the dice.** The app plays out one year, drawing how many of each event happens and what each one costs. A quiet year might cost nothing. A bad one might see a breach and a ransomware attack in the same year.
-3. **Repeat 100,000 times.** That gives 100,000 possible years, from calm to awful.
-4. **Count.** In what share of those years did losses pass $1M? $5M? $20M?
+1. **List the risks:** Six sample scenarios are included, such as ransomware, a customer data breach, and an outage at a key cloud vendor.
+2. **Roll the dice:** The app plays out one year, drawing how many of each event happens and what each one costs. A quiet year might cost nothing. A bad one might see a breach and a ransomware attack in the same year.
+3. **Repeat 100,000 times:** That gives 100,000 possible years, from calm to awful.
+4. **Count:** In what share of those years did losses pass $1M? $5M? $20M?
 
 ## Reading the Screen
 
-- **Scenario Register.** The list of risks and their ranges. Click any scenario to open and edit it.
-- **Risk Appetite.** The board's limits. The defaults say: no more than a 60% chance of losing over $1M in a year, 10% for over $5M, and 1% for over $20M.
-- **Loss Exceedance Curve.** The main chart. Pick any dollar amount on the bottom axis. The height of the green curve shows the chance of losing more than that in a year. The gold dots are the board's limits. **If the curve passes above a gold dot, that limit is broken.**
-- **Annualized Loss by Scenario.** Which risks cost the most on average.
-- **Control Under Evaluation.** A proposed security investment, its yearly cost, and what it changes. The blue dashed curve shows the risk with the control in place.
-- **The slider and Play.** Watch the answer settle as the run count grows from 100 to 100,000 years.
+- **Scenario Register:** The list of risks and their ranges. Click any scenario to open and edit it.
+- **Risk Appetite:** The board's limits. The defaults say: no more than a 60% chance of losing over $1M in a year, 10% for over $5M, and 1% for over $20M.
+- **Loss Exceedance Curve:** The main chart. Pick any dollar amount on the bottom axis. The height of the green curve shows the chance of losing more than that in a year. The gold dots are the board's limits. **If the curve passes above a gold dot, that limit is broken.**
+- **Annualized Loss by Scenario:** Which risks cost the most on average.
+- **Control Under Evaluation:** A proposed security investment, its yearly cost, and what it changes. The blue dashed curve shows the risk with the control in place.
+- **The slider and Play:** Watch the answer settle as the run count grows from 100 to 100,000 years.
 
 ## A Story in Three Moments
 
@@ -108,8 +108,8 @@ The board gets a clear decision: a $150K investment that pays for itself and fix
 
 ## Limits to Keep in Mind
 
-- **It's a teaching tool.** The scenarios are sample data, not a real firm's risks.
-- **Garbage in, garbage out.** The answers are only as good as the ranges. The high guesses matter most.
-- **Risks are treated as independent.** In reality, one event can trigger another. A ransomware attack can also become a data breach, so bad years may be worse than shown.
-- **No insurance yet.** Cyber insurance, which would cut the top of the loss range, is planned for version 2.
-- **Open FAIR is a trademark of The Open Group.** This app isn't affiliated with or endorsed by them.
+- **It's a teaching tool:** The scenarios are sample data, not a real firm's risks.
+- **Garbage in, garbage out:** The answers are only as good as the ranges. The high guesses matter most.
+- **Risks are treated as independent:** In reality, one event can trigger another. A ransomware attack can also become a data breach, so bad years may be worse than shown.
+- **No insurance yet:** Cyber insurance, which would cut the top of the loss range, is planned for version 2.
+- **Open FAIR is a trademark of The Open Group:** This app isn't affiliated with or endorsed by them.
