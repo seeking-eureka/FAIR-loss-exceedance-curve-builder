@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAIR Loss Exceedance Curve Builder</title>
+<meta name="description" content="Open FAIR scenarios, Monte Carlo simulation, and your risk appetite on one chart. A learning app for cyber risk quantification.">
+<link rel="canonical" href="https://patrick-lefler.com/fair_loss_exceedance_curve/">
+<!-- Link previews (Open Graph: LinkedIn, Facebook, Substack, Slack, iMessage) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Seeking Eureka">
+<meta property="og:title" content="FAIR Loss Exceedance Curve Builder">
+<meta property="og:description" content="Open FAIR scenarios, Monte Carlo simulation, and your risk appetite on one chart. A learning app for cyber risk quantification.">
+<meta property="og:url" content="https://patrick-lefler.com/fair_loss_exceedance_curve/">
+<meta property="og:image" content="https://patrick-lefler.com/fair_loss_exceedance_curve/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FAIR Loss Exceedance Curve Builder showing a simulated cyber loss exceedance curve against a three-point risk-appetite curve">
+<!-- X / Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAIR Loss Exceedance Curve Builder">
+<meta name="twitter:description" content="Open FAIR scenarios, Monte Carlo simulation, and your risk appetite on one chart. A learning app for cyber risk quantification.">
+<meta name="twitter:image" content="https://patrick-lefler.com/fair_loss_exceedance_curve/preview.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>FAIR Loss Exceedance Curve Builder</h1>
+      <p class="sub">Open FAIR scenarios, Monte Carlo simulation, and your risk appetite on one chart.</p>
+    </div>
+    <span class="tag mono">OPEN FAIR · MONTE CARLO</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" role="tab" aria-selected="true" data-tab="sim">Simulator</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="guide">Guide &amp; Math</button>
+  </nav>
+
+  <!-- ================= SIMULATOR ================= -->
+  <main id="tab-sim" class="tabpanel">
+    <div class="grid">
+      <div class="col-left">
+        <!-- Scenario register -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Scenario Register: Open FAIR Inputs</h2>
+            <button class="link-btn danger" id="resetBtn">Reset defaults</button>
+          </div>
+          <p class="hint top-hint">Every input is a calibrated range: minimum, most likely, maximum. Money is in $K; you can also type 1.5M or 300K.</p>
+          <div id="scenList" class="scen-list"></div>
+          <div class="reg-foot">
+            <button class="chip" id="addScen">+ Add scenario</button>
+            <span class="mono muted small" id="regTotal"></span>
+          </div>
+          <div class="msgs" id="scenMsgs" aria-live="polite"></div>
+        </section>
+
+        <!-- Appetite -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Risk Appetite</h2>
+            <button class="chip" id="addApp">+ Add point</button>
+          </div>
+          <div class="app-head small muted"><span>Annual loss above</span><span>Max probability</span><span>Focus</span><span></span></div>
+          <div id="appList"></div>
+          <p class="hint">Each point reads: "We accept no more than this chance of losing more than this amount in a year." The focus point drives the trajectory chart and the precision check.</p>
+          <div class="msgs" id="appMsgs" aria-live="polite"></div>
+        </section>
+
+        <!-- Control -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Control Under Evaluation</h2>
+            <label class="switch small"><input type="checkbox" id="ctrlOn" checked> <span>Include</span></label>
+          </div>
+          <div id="ctrlBody">
+            <div class="ctrl-grid">
+              <label class="wide">Control<input class="num txt" id="ctrlName"></label>
+              <label>Annual cost ($K)<input class="num" id="ctrlCost" inputmode="decimal"></label>
+              <label>Applies to<select class="num" id="ctrlTarget"></select></label>
+            </div>
+            <div class="ctrl-cats">
+              <div class="cat"><div class="cat-h">Loss prevention <span class="muted">· changes LEF</span></div>
+                <label class="slider-row"><span>TEF −% <i class="muted">avoidance / deterrent</i></span><input type="range" id="rTef" min="0" max="90" step="5"><span class="mono" id="rTefV"></span></label>
+                <label class="slider-row"><span>Vulnerability −% <i class="muted">vulnerability control</i></span><input type="range" id="rVul" min="0" max="90" step="5"><span class="mono" id="rVulV"></span></label>
+              </div>
+              <div class="cat"><div class="cat-h">Loss mitigation <span class="muted">· changes loss magnitude</span></div>
+                <label class="slider-row"><span>Primary loss −% <i class="muted">responsive</i></span><input type="range" id="rPl" min="0" max="90" step="5"><span class="mono" id="rPlV"></span></label>
+                <label class="slider-row"><span>Secondary loss −% <i class="muted">responsive</i></span><input type="range" id="rSl" min="0" max="90" step="5"><span class="mono" id="rSlV"></span></label>
+              </div>
+            </div>
+            <div class="prior-result mono" id="ctrlResult"></div>
+          </div>
+          <div class="msgs" id="ctrlMsgs" aria-live="polite"></div>
+        </section>
+
+        <!-- Stepper -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Step Through the Simulation</h2>
+            <span class="mono muted" id="stepLabel"></span>
+          </div>
+          <div class="stepper">
+            <button class="icon-btn" id="prevBtn" aria-label="Fewer simulated years">‹</button>
+            <input type="range" id="stepRange" min="0" max="9" step="1" value="9" aria-label="Simulated years">
+            <button class="icon-btn" id="nextBtn" aria-label="More simulated years">›</button>
+            <button class="play-btn" id="playBtn">Play</button>
+          </div>
+          <div class="ticks mono"><span>100</span><span>1K</span><span>10K</span><span>100K</span></div>
+          <div class="seed-row small"><span class="muted mono" id="seedLabel"></span><button class="link-btn accent-link" id="seedBtn">Re-run with new seed</button><span class="mono faint" id="simTime"></span></div>
+        </section>
+
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi-label">1 · Annualized loss</div>
+            <div class="kpi-val mono" id="k1"></div>
+            <div class="kpi-sub mono" id="k1s"></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">3 · 1-in-100 year loss</div>
+            <div class="kpi-val mono" id="k3"></div>
+            <div class="kpi-sub mono" id="k3s"></div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">4 · Control value</div>
+            <div class="kpi-val mono" id="k4"></div>
+            <div class="kpi-sub mono" id="k4s"></div>
+          </div>
+          <div class="kpi accent kpi-wide">
+            <div class="kpi-label">2 · Risk appetite check</div>
+            <div class="app-verdict" id="k2v"></div>
+            <div class="app-rows mono" id="k2"></div>
+          </div>
+        </section>
+
+        <!-- Precision -->
+        <section class="card cluster-card">
+          <div class="card-head">
+            <h2>Monte Carlo Precision</h2>
+            <span class="flag mono" id="precFlag"></span>
+          </div>
+          <p class="small muted" id="precTxt"></p>
+        </section>
+
+        <!-- Walkthrough -->
+        <section class="card">
+          <div class="card-head">
+            <h2>The Calculation, Step by Step</h2>
+            <select class="num mini-select" id="calcScen" aria-label="Scenario for the worked calculation"></select>
+          </div>
+          <ol class="steps" id="steps"></ol>
+        </section>
+      </div>
+
+      <div class="col-right">
+        <!-- LEC -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Loss Exceedance Curve</h2>
+            <div class="seg" role="group" aria-label="Probability axis scale">
+              <button class="chip on" data-scale="lin">Linear</button>
+              <button class="chip" data-scale="log">Log</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="lecChart" class="chart" viewBox="0 0 640 330" role="img" aria-label="Loss exceedance curve with risk appetite points"></svg>
+            <div class="tip mono" id="lecTip" hidden></div>
+          </div>
+          <div class="legend mono">
+            <span><i class="sw main"></i>Current curve</span>
+            <span><i class="sw band"></i>95% Monte Carlo band</span>
+            <span><i class="sw faint"></i>Earlier batches</span>
+            <span><i class="sw ctrl"></i>With control</span>
+            <span><i class="sw appetite"></i>Risk appetite</span>
+          </div>
+        </section>
+
+        <!-- By scenario -->
+        <section class="card">
+          <div class="card-head"><h2>Annualized Loss by Scenario</h2><span class="muted small" id="barNote"></span></div>
+          <svg id="barChart" class="chart" viewBox="0 0 640 240" role="img" aria-label="Annualized loss by scenario"></svg>
+          <div class="legend mono">
+            <span><i class="sw zbox za"></i>Without control</span>
+            <span><i class="sw zbox zc"></i>With control</span>
+          </div>
+        </section>
+
+        <!-- Convergence -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Convergence as Runs Grow</h2>
+            <div class="seg" role="group" aria-label="Metric">
+              <button class="chip on" data-metric="p">P(focus)</button>
+              <button class="chip" data-metric="ale">ALE</button>
+              <button class="chip" data-metric="q99">1-in-100</button>
+            </div>
+          </div>
+          <svg id="trajChart" class="chart" viewBox="0 0 640 250" role="img" aria-label="Estimate and Monte Carlo band as simulated years grow"></svg>
+          <div class="legend mono" id="trajLegend"></div>
+        </section>
+
+        <!-- Table -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Simulation Log</h2>
+            <span class="muted small">Each row adds years to the same run. Click a row to jump to it.</span>
+          </div>
+          <div class="table-wrap">
+            <table class="log">
+              <thead><tr><th>Years</th><th>ALE ± 95%</th><th id="thFocus">P(&gt; focus)</th><th>1-in-20</th><th>1-in-100</th><th>Worst</th><th>Appetite</th></tr></thead>
+              <tbody id="logBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= GUIDE ================= -->
+  <main id="tab-guide" class="tabpanel hidden">
+    <article class="guide">
+      <div id="guideDyn" class="guide-dyn"></div>
+
+      <section class="card">
+        <h2 class="g">9. Things to Try</h2>
+        <ul>
+          <li>Set the stepper to <b>100</b> and press <b>Re-run with new seed</b> a few times. Watch P(loss &gt; $5M) jump around the 10% line. Then do the same at 100K.</li>
+          <li>Switch the control off and the $5M point turns red. Switch it back on and lower the Vulnerability reduction to find the smallest reduction that keeps the firm inside appetite. Watch how the return on the control changes as you go.</li>
+          <li>Open <b>Customer data breach</b> and raise the secondary loss maximum from $15,000K to $40,000K. The annualized loss rises by under a fifth (about $2.3M to $2.7M), but the 1-in-100 year loss climbs by roughly two thirds (about $13M to $22M) and the worst simulated year doubles. Maximum estimates drive the tail far more than the average.</li>
+          <li>Switch <b>Ransomware outage</b> to <b>Estimate LEF directly</b>. The app pre-fills a range from TEF × Vulnerability, which is the top-down route O-RA allows. The control's TEF and Vulnerability reductions then apply to LEF as a whole, because there is no longer a separate Vulnerability to act on.</li>
+          <li>Switch the probability axis to <b>Log</b>. The 1% appetite point at $20M becomes readable, along with how thin the tail estimate is at low run counts.</li>
+        </ul>
+        <h3 class="g3">Input rules</h3>
+        <ul>
+          <li>Each range needs minimum ≤ most likely ≤ maximum. All three can be equal, which fixes the value.</li>
+          <li>TEF and LEF are events per year, 0 or more, up to 500. A maximum above 50 a year gets a soft warning.</li>
+          <li>Vulnerability and SLEF are probabilities from 0% to 100%.</li>
+          <li>Losses are in $K and must be 0 or more. A maximum more than 100 times the minimum gets a soft warning, since that implies an extreme tail.</li>
+          <li>The register holds 1 to 10 scenarios. The appetite curve holds 1 to 5 points. Larger losses can't have a higher tolerance than smaller ones.</li>
+          <li>Control reductions run from 0% to 90%, and the annual cost must be 0 or more.</li>
+        </ul>
+      </section>
+
+      <section class="card credits">
+        <h2 class="g">10. Sources &amp; Credits</h2>
+        <h3 class="g3">Open FAIR standards</h3>
+        <ul>
+          <li><b>The Open Group, Risk Taxonomy (O-RT) Standard, Version 3.0.1.</b> Definitions of Loss Event Frequency, Threat Event Frequency, Vulnerability, and the loss magnitude factors used in the scenario register. <a href="https://pubs.opengroup.org/security/o-rt/" target="_blank" rel="noopener">pubs.opengroup.org</a></li>
+          <li><b>The Open Group, Risk Analysis (O-RA) Standard, Version 2.0.1.</b> The five-stage analysis process, the top-down choice between estimating LEF directly or deriving it, and the control categories in the Control card. <a href="https://www.opengroup.org/open-fair" target="_blank" rel="noopener">The Open FAIR Body of Knowledge</a></li>
+          <li><b>The Open Group, Open FAIR Risk Analysis Process Guide.</b> Worked process steps, and the PERT convention for minimum, most likely, and maximum estimates. <a href="https://pubs.opengroup.org/security/openfair-process-guide-v1.0/" target="_blank" rel="noopener">pubs.opengroup.org</a></li>
+          <li><b>John Linford (2020), "Updates to the Open FAIR Body of Knowledge, Part 2."</b> The Open Group Blog. Explains why O-RA 2.0 dropped the confidence parameter, how secondary loss is structured, and the loss prevention and loss mitigation control groups. <a href="https://blog.opengroup.org/2020/12/02/updates-to-the-open-fair-body-of-knowledge-part-2/" target="_blank" rel="noopener">blog.opengroup.org</a></li>
+        </ul>
+        <h3 class="g3">Methods</h3>
+        <ul>
+          <li><b>Douglas W. Hubbard and Richard Seiersen (2023), <span class="nowrap">How to Measure Anything in Cybersecurity Risk</span>, 2nd ed.</b> Wiley. Loss exceedance curves, risk-tolerance curves, and Monte Carlo simulation for cyber risk. <a href="https://onlinelibrary.wiley.com/doi/book/10.1002/9781119892335" target="_blank" rel="noopener">Wiley Online Library</a></li>
+          <li><b>D. G. Malcolm, J. H. Roseboom, C. E. Clark, and W. Fazar (1959), "Application of a Technique for Research and Development Program Evaluation."</b> <span class="nowrap">Operations Research</span> 7(5): 646–669. The origin of the PERT three-point estimate. <a href="https://doi.org/10.1287/opre.7.5.646" target="_blank" rel="noopener">DOI link</a></li>
+        </ul>
+        <h3 class="g3">Companion apps</h3>
+        <ul>
+          <li><b>Bayesian VaR Backtester.</b> Breach rates, Basel zones, and their uncertainty, updated every 25 trading days. <a href="https://patrick-lefler.com/bayesian_var_backtester/" target="_blank" rel="noopener">patrick-lefler.com</a></li>
+          <li><b>Bayes at the Plate.</b> The same step-through layout, applied to a baseball batting average. <a href="https://patrick-lefler.com/bayes_batting_avg_learning_app/" target="_blank" rel="noopener">patrick-lefler.com</a></li>
+        </ul>
+        <h3 class="g3">Notes</h3>
+        <ul>
+          <li><b>Illustrative data.</b> The fintech, its scenarios, and every estimate are made up. They don't represent any real firm, incident, or loss history.</li>
+          <li><b>No affiliation.</b> Open FAIR is a trademark of The Open Group. This app isn't affiliated with or endorsed by The Open Group, the FAIR Institute, or any author cited above, and it isn't an official Open FAIR tool.</li>
+          <li><b>Educational use only.</b> It's a teaching tool for cyber risk quantification, not security, insurance, or investment advice.</li>
+          <li><b>Code and fonts.</b> All math and charts are original vanilla JavaScript and SVG, with no third-party libraries. The fonts are Inter and JetBrains Mono, used under the SIL Open Font License.</li>
+        </ul>
+      </section>
+    </article>
+  </main>
+
+  <footer class="foot muted small">Model: for each scenario and simulated year, TEF and Vulnerability (or LEF) are drawn from PERT ranges; loss events ~ Poisson(TEF × Vulnerability); each event's loss = Primary + Secondary, with Secondary occurring with probability SLEF. Annual loss sums all events across scenarios.<br>Illustrative data for education only; not security, insurance, or investment advice. Open FAIR is a trademark of The Open Group; this app is not affiliated with it. Built by Patrick Lefler · Seeking Eureka. See Guide &amp; Math, section 10, for sources.</footer>
+</div>
+<script src="app.js"></script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  const DEFAULT_LINE_HEIGHT = 16;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  const PICK_CAPABILITIES = ["pick"];
+  const PICK_CHAIN_LENGTH = 4;
+  const PICK_MAX_TEXT_CHARS = 120;
+  const PICK_MAX_HTML_CHARS = 300;
+
+  function truncate(value, maxChars) {
+    return value.length > maxChars ? value.slice(0, maxChars - 1) + "…" : value;
+  }
+
+  function isPickableElement(element) {
+    return (
+      element instanceof Element &&
+      element !== document.documentElement &&
+      element !== document.body
+    );
+  }
+
+  function resolvePickTarget(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const element = document.elementFromPoint(x, y);
+    return isPickableElement(element) ? element.closest("svg") || element : null;
+  }
+
+  function pickLabel(element) {
+    if (element.id) return element.localName + "#" + element.id;
+    return [element.localName].concat(Array.from(element.classList).slice(0, 2)).join(".");
+  }
+
+  // Only attributes that help find the element in source. data-* values and URL
+  // query strings or fragments can carry tokens.
+  const PICK_ATTRIBUTES = new Set([
+    "id",
+    "class",
+    "name",
+    "type",
+    "role",
+    "alt",
+    "aria-label",
+    "href",
+    "src",
+  ]);
+
+  function pickAttributeValue(attribute) {
+    return attribute.name === "href" || attribute.name === "src"
+      ? attribute.value.split(/[?#]/)[0]
+      : attribute.value;
+  }
+
+  function describePickElement(element) {
+    const chain = [];
+    for (
+      let current = element;
+      isPickableElement(current) && chain.length < PICK_CHAIN_LENGTH;
+      current = current.parentElement
+    ) {
+      chain.unshift(current);
+    }
+    const attributes = Array.from(element.attributes)
+      .filter((attribute) => PICK_ATTRIBUTES.has(attribute.name))
+      .map((attribute) => ` ${attribute.name}="${pickAttributeValue(attribute).replace(/"/g, "&quot;")}"`)
+      .join("");
+    const text = (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
+    return {
+      chain: chain.map(pickLabel),
+      html: truncate(`<${element.localName}${attributes}>`, PICK_MAX_HTML_CHARS),
+      text: text ? truncate(text, PICK_MAX_TEXT_CHARS) : undefined,
+    };
+  }
+
+  // Hover asks once per frame, and innerText on a large section forces layout,
+  // so only the rect is re-read while the pointer stays on the same element.
+  // Clicks ask for fresh details since the page may have changed the element.
+  let lastPick = null;
+
+  function describePickTarget(element, fresh) {
+    if (fresh || lastPick?.element !== element) {
+      lastPick = { element, details: describePickElement(element) };
+    }
+    const rect = element.getBoundingClientRect();
+    return {
+      rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      ...lastPick.details,
+    };
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+      capabilities: PICK_CAPABILITIES,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_PICK") {
+      const element = resolvePickTarget(event.data.x, event.data.y);
+      postToTrustedTop({
+        type: "INLINE_EDIT_PICK_RESULT",
+        seq: event.data.seq,
+        target: element ? describePickTarget(element, event.data.fresh === true) : null,
+      });
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_BY") {
+      const { deltaX, deltaY, deltaMode } = event.data;
+      if (!scrollForwarding || !Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
+      if (deltaMode !== 0 && deltaMode !== 1 && deltaMode !== 2) return;
+      const lineHeight =
+        parseFloat(getComputedStyle(document.documentElement).lineHeight) || DEFAULT_LINE_HEIGHT;
+      const scaleX = deltaMode === 1 ? lineHeight : deltaMode === 2 ? window.innerWidth : 1;
+      const scaleY = deltaMode === 1 ? lineHeight : deltaMode === 2 ? window.innerHeight : 1;
+      // The selection overlay receives the wheel event instead of this iframe.
+      // Instant scrolling preserves trackpad deltas even on smooth-scroll sites.
+      window.scrollBy({ left: deltaX * scaleX, top: deltaY * scaleY, behavior: "instant" });
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
