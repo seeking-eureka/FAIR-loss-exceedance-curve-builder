@@ -90,11 +90,6 @@ The app is plain JavaScript with hand-drawn SVG charts and no third-party librar
 - Douglas W. Hubbard and Richard Seiersen (2023), [How to Measure Anything in Cybersecurity Risk, 2nd ed.](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119892335), Wiley. Loss exceedance curves, risk tolerance curves, and calibrated estimation.
 - D. G. Malcolm, J. H. Roseboom, C. E. Clark, and W. Fazar (1959), ["Application of a Technique for Research and Development Program Evaluation,"](https://doi.org/10.1287/opre.7.5.646) Operations Research 7(5): 646–669. The origin of the PERT estimate.
 
-**Companion apps**
-
-- [Bayesian VaR Backtester](https://patrick-lefler.com/bayesian_var_backtester/)
-- [Bayes at the Plate](https://patrick-lefler.com/bayes_batting_avg_learning_app/)
-
 **Fonts:** [Inter](https://fonts.google.com/specimen/Inter) and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), used under the SIL Open Font License.
 
 ## Disclaimer
