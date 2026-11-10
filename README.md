@@ -4,7 +4,7 @@ An interactive app for learning cyber risk quantification with the Open FAIR mod
 
 The app is a teaching tool, not a risk-reporting or insurance-pricing system. It favors clear, visible math over production features.
 
-**Live app:** https://seeking-eureka.com/FAIR-loss-exceedance-curve-builder/
+**Live app:** https://seeking-eureka.github.io/FAIR-loss-exceedance-curve-builder/
 
 ## What the App Shows
 
@@ -69,6 +69,7 @@ There's no build step and nothing to install. Clone the repo and open `index.htm
 ```
 index.html   page structure and static guide content
 styles.css   dark theme and layout
+assets/      Seeking Eureka logo and favicon
 app.js       PERT sampling, Poisson frequency, Monte Carlo engine, appetite check, SVG charts, and dynamic guide text
 preview.png  link-preview image
 ```
@@ -89,6 +90,11 @@ The app is plain JavaScript with hand-drawn SVG charts and no third-party librar
 
 - Douglas W. Hubbard and Richard Seiersen (2023), [How to Measure Anything in Cybersecurity Risk, 2nd ed.](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119892335), Wiley. Loss exceedance curves, risk tolerance curves, and calibrated estimation.
 - D. G. Malcolm, J. H. Roseboom, C. E. Clark, and W. Fazar (1959), ["Application of a Technique for Research and Development Program Evaluation,"](https://doi.org/10.1287/opre.7.5.646) Operations Research 7(5): 646–669. The origin of the PERT estimate.
+
+**Companion apps**
+
+- [Bayesian VaR Backtester](https://seeking-eureka.com/bayesian-var-backtester/)
+- [Bayes at the Plate](https://seeking-eureka.com/bayes-at-the-plate/)
 
 **Fonts:** [Inter](https://fonts.google.com/specimen/Inter) and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), used under the SIL Open Font License.
 
